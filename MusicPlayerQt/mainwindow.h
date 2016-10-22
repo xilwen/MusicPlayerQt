@@ -42,6 +42,7 @@ private:
     void timeLabelUpdater();
     void openFile();
     void stopMusic();
+    void clearLabels();
 };
 
 #endif // MAINWINDOW_H

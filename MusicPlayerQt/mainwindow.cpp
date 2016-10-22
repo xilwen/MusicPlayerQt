@@ -10,15 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
     LoadDarkStylesheet();
     window()->setFixedSize( window()->sizeHint() );
     ui->setupUi(this);
-    ui->SongTitleLabel->setFont(QFont("Microsoft JhengHei UI", 20, QFont::Bold));
-    ui->SongTitleLabel->setText("");
-    ui->SongAlbumLabel->setFont(QFont("Microsoft JhengHei UI", 12, QFont::Normal));
-    ui->SongAlbumLabel->setText("");
-    ui->TimerLabel->setFont(QFont("Microsoft JhengHei UI", 20, QFont::Normal));
-    ui->TimerLabel->setText("");
-    ui->LyricLabel0->setText("");
-    ui->LyricLabel1->setText("");
-    ui->LyricLabel2->setText("");
+    clearLabels();
 }
 
 MainWindow::~MainWindow()
@@ -45,8 +37,7 @@ void MainWindow::LoadDarkStylesheet()
 void MainWindow::popErrorMsgbox(QString msg)
 {
     QMessageBox errorMsg;
-    errorMsg.setText("Can not open File");
-    errorMsg.setInformativeText(msg);
+    errorMsg.setText(msg);
     errorMsg.exec();
 }
 
@@ -84,7 +75,6 @@ void MainWindow::on_PlayControlButton_clicked()
     }
     else
     {
-        stopMusic();
         playMusic();
     }
 }
@@ -96,17 +86,17 @@ void MainWindow::stopMusic()
     {
         //wait for lyric player to stop its thread
     }
-    ui->LyricLabel0->setText("");
-    ui->LyricLabel1->setText("");
-    ui->LyricLabel2->setText("");
+    if(fileName.size() > 0)
+        lyric->LoadFile(fileName);
     ui->PlayControlButton->setText("播放");
     player.stopFile();
     timer.stop();
-
 }
 
 void MainWindow::playMusic()
 {
+    stopMusic();
+    clearLabels();
     ui->PlayControlButton->setText("停止");
     try
     {
@@ -124,8 +114,11 @@ void MainWindow::playMusic()
 
     std::thread timeUpdater(&MainWindow::timeLabelUpdater, this);
     timeUpdater.detach();
-    std::thread lyricUpdater(&LyricPlayer::PlayLyric, lyric, ui->LyricLabel0, ui->LyricLabel1, ui->LyricLabel2);
-    lyricUpdater.detach();
+    if(lyric->isAvailable() == true)
+    {
+        std::thread lyricUpdater(&LyricPlayer::PlayLyric, lyric, ui->LyricLabel0, ui->LyricLabel1, ui->LyricLabel2);
+        lyricUpdater.detach();
+    }
 }
 
 void MainWindow::timeLabelUpdater()
@@ -143,8 +136,10 @@ void MainWindow::timeLabelUpdater()
         outSec = (((sec < 10)? "0" : "") + std::to_string(sec));
         out = std::string(outMin + ":" + outSec).c_str();
         ui->TimerLabel->setText(out);
+        ui->TimerLabel->update();
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
+    stopMusic();
     timer.stop();
 }
 
@@ -156,6 +151,19 @@ void MainWindow::openFile()
         player.openFile(fileName);
         lyric->LoadFile(fileName);
     }
+}
+
+void MainWindow::clearLabels()
+{
+    ui->SongTitleLabel->setFont(QFont("Microsoft JhengHei UI", 20, QFont::Bold));
+    ui->SongTitleLabel->setText("");
+    ui->SongAlbumLabel->setFont(QFont("Microsoft JhengHei UI", 12, QFont::Normal));
+    ui->SongAlbumLabel->setText("");
+    ui->TimerLabel->setFont(QFont("Microsoft JhengHei UI", 20, QFont::Normal));
+    ui->TimerLabel->setText("");
+    ui->LyricLabel0->setText("");
+    ui->LyricLabel1->setText("");
+    ui->LyricLabel2->setText("");
 }
 
 

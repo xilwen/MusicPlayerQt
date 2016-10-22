@@ -17,6 +17,7 @@ public:
     void LoadFile(const std::string& in);
     void PlayLyric(QLabel* upper, QLabel* mid, QLabel* med);
     bool isPlaying();
+    bool isAvailable();
     void Stop();
 private:
     struct DynaLyric
@@ -28,8 +29,9 @@ private:
     std::string filename;
     std::deque<DynaLyric> lyricBase;
 
-    bool stop;
-    bool playing;
+    bool stop = false;
+    bool playing = false;
+    bool available = false;
     Timer& timer;
 
     void LyricParser(QFile& in);

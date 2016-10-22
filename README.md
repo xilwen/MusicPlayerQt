@@ -10,3 +10,6 @@ Play single MP3 file and load LRC lyrics.
 
 ##Know Issues
 Because QMediaPlayer uses DirectShow for playback, if the PC did not install proper codecs then the player will not work.
+
+##Thanks to
+ColinDuquesnoy/QDarkStyleSheet

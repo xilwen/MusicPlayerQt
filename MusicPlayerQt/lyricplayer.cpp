@@ -18,10 +18,14 @@ void LyricPlayer::LoadFile(const std::string& in)
     if (!inFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         qInfo() << "Cannot open LRC file.";
+        available = false;
     }
-
-    LyricParser(inFile);
-    inFile.close();
+    else
+    {
+        LyricParser(inFile);
+        inFile.close();
+        available = true;
+    }
 }
 
 void LyricPlayer::LyricParser(QFile& inFile)
@@ -61,7 +65,7 @@ void LyricPlayer::PlayLyric(QLabel* upper, QLabel* mid, QLabel* med)
         }
         while(sec == timer.getSecond())
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             if(sec < timer.getSecond())
             {
                 break;
@@ -82,7 +86,6 @@ void LyricPlayer::updateScrn(QLabel* upper, QLabel* mid, QLabel* med, std::deque
     med->update();
 }
 
-
 void LyricPlayer::Stop()
 {
     stop = true;
@@ -91,5 +94,10 @@ void LyricPlayer::Stop()
 bool LyricPlayer::isPlaying()
 {
     return playing;
+}
+
+bool LyricPlayer::isAvailable()
+{
+    return available;
 }
 
