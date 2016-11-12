@@ -2,7 +2,6 @@
 
 LyricPlayer::LyricPlayer(Timer& _timer): timer(_timer)
 {
-
 }
 
 void LyricPlayer::LoadFile(const std::string& in)
@@ -43,7 +42,7 @@ void LyricPlayer::LyricParser(QFile& inFile)
     }
 }
 
-void LyricPlayer::PlayLyric(QLabel* upper, QLabel* mid, QLabel* med)
+void LyricPlayer::PlayLyric()
 {
     playing = true;
     unsigned int NextLrcPtr = 2, sec = 0;
@@ -51,7 +50,7 @@ void LyricPlayer::PlayLyric(QLabel* upper, QLabel* mid, QLabel* med)
     stage.resize(3);
     stage[1] = lyricBase[0].text;
     stage[2] = (static_cast<int>(lyricBase.size()) > 1)? lyricBase[1].text : "";
-    updateScrn(upper, mid, med, stage);
+    lyricChanged(stage);
     stop = false;
 
     while(NextLrcPtr < lyricBase.size() && stop == false)
@@ -60,12 +59,12 @@ void LyricPlayer::PlayLyric(QLabel* upper, QLabel* mid, QLabel* med)
         {
             stage.pop_front();
             stage.push_back(lyricBase.at(NextLrcPtr).text);
-            updateScrn(upper, mid, med, stage);
+            lyricChanged(stage);
             ++NextLrcPtr;
         }
         while(sec == timer.getSecond())
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             if(sec < timer.getSecond())
             {
                 break;
@@ -74,16 +73,6 @@ void LyricPlayer::PlayLyric(QLabel* upper, QLabel* mid, QLabel* med)
         sec = timer.getSecond();
     }
     playing = false;
-}
-
-void LyricPlayer::updateScrn(QLabel* upper, QLabel* mid, QLabel* med, std::deque<std::string>& stage)
-{
-    upper->setText(stage[0].c_str());
-    mid->setText(stage[1].c_str());
-    med->setText(stage[2].c_str());
-    upper->update();
-    mid->update();
-    med->update();
 }
 
 void LyricPlayer::Stop()

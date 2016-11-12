@@ -1,37 +1,35 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QObject* uiObject) : ui(uiObject)
 {
+    initUIObjects();
     lyric = new LyricPlayer(timer);
-    LoadDarkStylesheet();
-    window()->setFixedSize( window()->sizeHint() );
-    ui->setupUi(this);
     clearLabels();
+    qRegisterMetaType<std::deque<std::string> >("std::deque<std::string>");
+    connect(lyric, &LyricPlayer::lyricChanged, this,
+            &MainWindow::updateLyric);
+    connect(this, &MainWindow::timerTickedwithQString, this, &MainWindow::updateTimeLabel);
+    connect(this, &MainWindow::timerTicked, this, &MainWindow::updateProgressBar);
 }
+
+void MainWindow::initUIObjects()
+{
+    songTitleLabel = ui->findChild<QObject*>("songTitleLabel");
+    songAlbumLabel = ui->findChild<QObject*>("songAlbumLabel");
+    openFileButton = ui->findChild<QObject*>("openFileButton");
+    playControlButton = ui->findChild<QObject*>("playControlButton");
+    lyricLabel0 = ui->findChild<QObject*>("lyricLabel0");
+    lyricLabel1 = ui->findChild<QObject*>("lyricLabel1");
+    lyricLabel2 = ui->findChild<QObject*>("lyricLabel2");
+    progressBar1 = ui->findChild<QObject*>("progressBar1");
+    timerLabel = ui->findChild<QObject*>("timerLabel");
+}
+
 
 MainWindow::~MainWindow()
 {
     delete lyric;
-    delete ui;
-}
-
-void MainWindow::LoadDarkStylesheet()
-{
-    QFile f(":qdarkstyle/style.qss");
-    if (!f.exists())
-    {
-        qInfo() <<"Unable to set stylesheet, file not found\n";
-    }
-    else
-    {
-        f.open(QFile::ReadOnly | QFile::Text);
-        QTextStream ts(&f);
-        qApp->setStyleSheet(ts.readAll());
-    }
 }
 
 void MainWindow::popErrorMsgbox(QString msg)
@@ -56,17 +54,15 @@ void MainWindow::on_OpenFileButton_clicked()
     }
     if(fileName.size() > 0)
     {
-        ui->PlayControlButton->clicked(); //workaround for Qt not detecting metadata
-        ui->PlayControlButton->setFocus();
+       stopMusic();
     }
 }
-
 
 void MainWindow::on_PlayControlButton_clicked()
 {
     if(fileName.size() == 0)
     {
-        ui->OpenFileButton->clicked();
+        openFile();
         return;
     }
     if(player.isPlaying() == true)
@@ -88,16 +84,19 @@ void MainWindow::stopMusic()
     }
     if(fileName.size() > 0)
         lyric->LoadFile(fileName);
-    ui->PlayControlButton->setText("播放");
+    playControlButton->setProperty("text", "播放");
     player.stopFile();
     timer.stop();
+    progressBar1->setProperty("indeterminate", true);
+
 }
 
 void MainWindow::playMusic()
 {
     stopMusic();
     clearLabels();
-    ui->PlayControlButton->setText("停止");
+    progressBar1->setProperty("indeterminate", false);
+    playControlButton->setProperty("text", "停止");
     try
     {
         player.playFile();
@@ -107,8 +106,8 @@ void MainWindow::playMusic()
         popErrorMsgbox(e.what());
     }
 
-    ui->SongTitleLabel->setText(player.getSongTitle());
-    ui->SongAlbumLabel->setText(player.getSongAlbum());
+    songTitleLabel->setProperty("text", player.getSongTitle());
+    songAlbumLabel->setProperty("text", player.getSongTitle());
 
     timer.reset();
 
@@ -116,7 +115,7 @@ void MainWindow::playMusic()
     timeUpdater.detach();
     if(lyric->isAvailable() == true)
     {
-        std::thread lyricUpdater(&LyricPlayer::PlayLyric, lyric, ui->LyricLabel0, ui->LyricLabel1, ui->LyricLabel2);
+        std::thread lyricUpdater(&LyricPlayer::PlayLyric, lyric);
         lyricUpdater.detach();
     }
 }
@@ -135,8 +134,8 @@ void MainWindow::timeLabelUpdater()
         outMin = (((min < 10)? "0" : "") + std::to_string(min));
         outSec = (((sec < 10)? "0" : "") + std::to_string(sec));
         out = std::string(outMin + ":" + outSec).c_str();
-        ui->TimerLabel->setText(out);
-        ui->TimerLabel->update();
+        timerTickedwithQString(out);
+        timerTicked(raw);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
     stopMusic();
@@ -145,7 +144,7 @@ void MainWindow::timeLabelUpdater()
 
 void MainWindow::openFile()
 {
-    fileName = QFileDialog::getOpenFileName(nullptr,"開啟音樂檔案", QDir::currentPath(),"MP3 (*.mp3)").toStdString();
+    fileName = QFileDialog::getOpenFileName(NULL,"開啟音樂檔案", QDir::currentPath(),"MP3 (*.mp3)").toStdString();
     if(fileName.size() > 0)
     {
         player.openFile(fileName);
@@ -155,15 +154,31 @@ void MainWindow::openFile()
 
 void MainWindow::clearLabels()
 {
-    ui->SongTitleLabel->setFont(QFont("Microsoft JhengHei UI", 20, QFont::Bold));
-    ui->SongTitleLabel->setText("");
-    ui->SongAlbumLabel->setFont(QFont("Microsoft JhengHei UI", 12, QFont::Normal));
-    ui->SongAlbumLabel->setText("");
-    ui->TimerLabel->setFont(QFont("Microsoft JhengHei UI", 20, QFont::Normal));
-    ui->TimerLabel->setText("");
-    ui->LyricLabel0->setText("");
-    ui->LyricLabel1->setText("");
-    ui->LyricLabel2->setText("");
+    songTitleLabel->setProperty("text", "");
+    songAlbumLabel->setProperty("text", "");
+    timerLabel->setProperty("text", "");
+    lyricLabel0->setProperty("text", "");
+    lyricLabel1->setProperty("text", "");
+    lyricLabel2->setProperty("text", "");
 }
+
+void MainWindow::updateLyric(const std::deque<std::string>& newLyricStage)
+{
+    lyricLabel0->setProperty("text", newLyricStage[0].c_str());
+    lyricLabel1->setProperty("text", newLyricStage[1].c_str());
+    lyricLabel2->setProperty("text", newLyricStage[2].c_str());
+}
+
+void MainWindow::updateTimeLabel(const QString& output)
+{
+    timerLabel->setProperty("text", output);
+}
+
+void MainWindow::updateProgressBar(const int& seconds)
+{
+    progressBar1->setProperty("value", static_cast<double>(seconds) / static_cast<double>(player.getSongDurationInSecond()));
+}
+
+
 
 

@@ -1,7 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
+#include <QObject>
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
@@ -9,40 +9,46 @@
 #include <QLayout>
 #include <thread>
 #include <string>
+#include <deque>
 #include "musicplayer.h"
 #include "timer.h"
 #include "lyricplayer.h"
 
-namespace Ui {
-class MainWindow;
-}
-
-class MainWindow : public QMainWindow
+class MainWindow : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    MainWindow() = delete;
+    MainWindow(QObject* uiObject);
     ~MainWindow();
+    Q_INVOKABLE void on_OpenFileButton_clicked();
+    Q_INVOKABLE void on_PlayControlButton_clicked();
 
-private slots:
-    void on_OpenFileButton_clicked();
+public slots:
+    void updateLyric(const std::deque<std::string>& newLyricStage);
+    void updateTimeLabel(const QString& output);
+    void updateProgressBar(const int& seconds);
 
-    void on_PlayControlButton_clicked();
+signals:
+    void timerTickedwithQString(const QString& output);
+    void timerTicked(const int& seconds);
 
 private:
-    Ui::MainWindow *ui;
+    QObject *ui, *songTitleLabel, *songAlbumLabel, *openFileButton,
+    *playControlButton, *lyricLabel0, *lyricLabel1, *lyricLabel2, *progressBar1, *timerLabel;
     MusicPlayer player;
     Timer timer;
     LyricPlayer* lyric;
     std::string fileName;
-    void LoadDarkStylesheet();
     void popErrorMsgbox(QString msg);
     void playMusic();
     void timeLabelUpdater();
     void openFile();
     void stopMusic();
     void clearLabels();
+
+    void initUIObjects();
 };
 
 #endif // MAINWINDOW_H

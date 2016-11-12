@@ -17,6 +17,7 @@ public:
     bool isPlaying();
     QString getSongTitle();
     QString getSongAlbum();
+    int getSongDurationInSecond();
 
 private:
     QMediaPlayer player;

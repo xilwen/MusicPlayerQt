@@ -4,21 +4,26 @@
 #include <string>
 #include <deque>
 #include <cctype>
-#include <QLabel>
+#include <QObject>
 #include <QFile>
 #include <QDebug>
 #include "timer.h"
 
-class LyricPlayer
+class LyricPlayer : public QObject
 {
+    Q_OBJECT
 public:
     LyricPlayer() = delete;
     LyricPlayer(Timer& _timer);
     void LoadFile(const std::string& in);
-    void PlayLyric(QLabel* upper, QLabel* mid, QLabel* med);
+    void PlayLyric();
     bool isPlaying();
     bool isAvailable();
     void Stop();
+
+signals:
+    void lyricChanged(const std::deque<std::string>& newLyricStage);
+
 private:
     struct DynaLyric
     {
@@ -35,8 +40,6 @@ private:
     Timer& timer;
 
     void LyricParser(QFile& in);
-    void updateScrn(QLabel* upper, QLabel* mid, QLabel* med, std::deque<std::string>& stage);
-
 };
 
 #endif // LYRICPLAYER_H

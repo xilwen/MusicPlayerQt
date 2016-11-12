@@ -44,3 +44,8 @@ QString MusicPlayer::getSongAlbum()
 {
     return player.metaData(QMediaMetaData::AlbumTitle).toString();
 }
+
+int MusicPlayer::getSongDurationInSecond()
+{
+    return (player.metaData(QMediaMetaData::Duration).toInt() / 1000);
+}
