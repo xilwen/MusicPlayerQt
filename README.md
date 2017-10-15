@@ -2,14 +2,14 @@
 A Music Player with limited support of LRC Lyrics.
 This is just a Qt practice.
 
-##Specs
+## Specs
 using Qt 5.8 Beta with Qt Quick Control 2.0.
 
-##Functions
+## Functions
 Play single MP3 file and load LRC lyrics.
 
-##Know Issues
+## Know Issues
 Because QMediaPlayer uses DirectShow for playback, if the PC did not install proper codecs then the player will not work.
 
-##Screenshot
+## Screenshot
 ![alt tag](https://raw.githubusercontent.com/xilwen/MusicPlayerQt/master/screenshot.jpg)
